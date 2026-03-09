@@ -1,15 +1,19 @@
-from utils import id_generator, hash_generator
+from utils import id_generator, hash_generator, verify_email
 import bcrypt
 from datetime import datetime
 
 class Usuario:
     def __init__(self, id, nome, senha, email, ativo=True, criado_em = None, senha_criptografada = False):
         self.id = id if id else id_generator.gerar_id()
+        if not nome:
+            raise ValueError ("Nome inválido")
         self.nome = nome
         if senha_criptografada:
             self.senha = senha
         else:
             self.senha = hash_generator._gerar_hash()
+        if not verify_email(email):
+            raise ValueError("Email Inválido")
         self.email = email
         self.ativo = ativo
         self.criado_em = criado_em if criado_em else datetime.now()
