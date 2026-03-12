@@ -2,7 +2,7 @@ import customtkinter as ctk
 from tkinter import messagebox
 
 from services.usuario_service import UsuarioService
-from gui.dashboard import Dashboard
+from gui.tela_dashboard import Dashboard
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")

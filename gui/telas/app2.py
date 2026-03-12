@@ -1,6 +1,6 @@
 import customtkinter as ctk
 
-from gui.login_window import LoginWindow
+from gui.tela_login import LoginWindow
 
 
 def main():
