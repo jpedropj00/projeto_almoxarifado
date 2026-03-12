@@ -1,6 +1,22 @@
 [
     {
-        "nome": "Mouse",
-        "quantidade": 2
+        "nome": "Arroz",
+        "quantidade": 13,
+        "categoria": "Alimentp"
+    },
+    {
+        "nome": "Sab\u00e3o em p\u00f3",
+        "quantidade": 12,
+        "categoria": "Limpeza"
+    },
+    {
+        "nome": "Resma de papel A4",
+        "quantidade": 12,
+        "categoria": "Escritorio"
+    },
+    {
+        "nome": "Feij\u00e3o",
+        "quantidade": 2,
+        "categoria": "Alimentp"
     }
 ]

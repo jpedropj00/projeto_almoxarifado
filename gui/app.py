@@ -1,166 +1,296 @@
 import streamlit as st
 import json
 import os
+import pandas as pd
+import plotly.express as px
 
-# ---------------- CONFIGURAÇÃO DE ARQUIVOS ----------------
+st.set_page_config(page_title="Almoxarifado Miguel Gurgel", layout="wide")
+
+# ---------------- CONFIGURAÇÃO ----------------
+
 DATA_DIR = "data"
+
 PRODUTOS_FILE = os.path.join(DATA_DIR, "produtos.json")
 CATEGORIAS_FILE = os.path.join(DATA_DIR, "categorias.json")
 USUARIOS_FILE = os.path.join(DATA_DIR, "usuarios.json")
+
 os.makedirs(DATA_DIR, exist_ok=True)
 
+
 # ---------------- FUNÇÕES ----------------
+
 def load_json(path):
+
     if not os.path.exists(path):
         return []
+
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
+
 def save_json(path, data):
+
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
 
+
 # ---------------- LOGIN ----------------
+
 def login_page():
-    st.title("Login")
-    usuario = st.text_input("Usuário", key="login_usuario")
-    senha = st.text_input("Senha", type="password", key="login_senha")
-    
+
+    st.title("🔐 Almoxarifado Miguel Gurgel")
+
+    usuario = st.text_input("Usuário")
+    senha = st.text_input("Senha", type="password")
+
     if st.button("Entrar"):
+
         usuarios = load_json(USUARIOS_FILE)
+
         for u in usuarios:
+
             if u["usuario"] == usuario and u["senha"] == senha:
-                st.session_state["logged_in"] = True
-                st.session_state["usuario"] = usuario
-                st.session_state["page"] = "dashboard"
-                st.success(f"Bem-vindo {usuario}!")
-                return
+
+                st.session_state.logged = True
+                st.session_state.usuario = usuario
+                st.rerun()
+
         st.error("Usuário ou senha inválidos")
-    
+
     if st.button("Criar conta"):
-        st.session_state["page"] = "register"
+
+        st.session_state.page = "register"
+        st.rerun()
+
 
 # ---------------- REGISTRO ----------------
+
 def register_page():
-    st.title("Criar Conta")
-    nome = st.text_input("Nome", key="reg_nome")
-    usuario = st.text_input("Usuário", key="reg_usuario")
-    senha = st.text_input("Senha", type="password", key="reg_senha")
-    confirma = st.text_input("Confirmar Senha", type="password", key="reg_confirma")
-    
+
+    st.title("Criar conta")
+
+    nome = st.text_input("Nome")
+    usuario = st.text_input("Usuário")
+    senha = st.text_input("Senha", type="password")
+    confirma = st.text_input("Confirmar senha", type="password")
+
     if st.button("Cadastrar"):
-        if not nome or not usuario or not senha:
-            st.error("Preencha todos os campos")
-        elif senha != confirma:
+
+        if senha != confirma:
+
             st.error("Senhas não coincidem")
-        else:
-            usuarios = load_json(USUARIOS_FILE)
-            if any(u["usuario"] == usuario for u in usuarios):
-                st.error("Usuário já existe")
-            else:
-                usuarios.append({"nome": nome, "usuario": usuario, "senha": senha})
-                save_json(USUARIOS_FILE, usuarios)
-                st.success("Usuário cadastrado!")
-    
-    if st.button("Voltar para Login"):
-        st.session_state["page"] = "login"
+            return
+
+        usuarios = load_json(USUARIOS_FILE)
+
+        if any(u["usuario"] == usuario for u in usuarios):
+
+            st.error("Usuário já existe")
+            return
+
+        usuarios.append({
+            "nome": nome,
+            "usuario": usuario,
+            "senha": senha
+        })
+
+        save_json(USUARIOS_FILE, usuarios)
+
+        st.success("Conta criada!")
+
+    if st.button("Voltar"):
+
+        st.session_state.page = "login"
+        st.rerun()
+
 
 # ---------------- DASHBOARD ----------------
-def dashboard():
-    st.sidebar.title(f"Olá, {st.session_state['usuario']}!")
-    menu = ["Produtos", "Categorias", "Logout"]
-    choice = st.sidebar.radio("Menu", menu)
-    
-    if choice == "Produtos":
-        produtos_page()
-    elif choice == "Categorias":
-        categorias_page()
-    elif choice == "Logout":
-        st.session_state["logged_in"] = False
-        st.session_state["page"] = "login"
-        st.experimental_rerun()
 
-# ---------------- PÁGINAS ----------------
-def produtos_page():
-    st.header("Produtos")
+def dashboard_home():
+
+    st.title("📊 Dashboard")
+
     produtos = load_json(PRODUTOS_FILE)
-    
-    with st.expander("Adicionar / Editar Produto"):
-        nome = st.text_input("Nome do Produto", key="prod_nome")
-        qtd = st.number_input("Quantidade", min_value=0, step=1, key="prod_qtd")
-        editar_idx = st.session_state.get("editar_produto_idx", None)
-        
-        if st.button("Salvar Produto"):
-            if not nome:
-                st.error("Nome obrigatório")
-            else:
-                if editar_idx is not None:
-                    produtos[editar_idx] = {"nome": nome, "quantidade": qtd}
-                    st.session_state["editar_produto_idx"] = None
-                else:
-                    produtos.append({"nome": nome, "quantidade": qtd})
-                save_json(PRODUTOS_FILE, produtos)
-                st.success("Produto salvo!")
 
-    if produtos:
-        for idx, p in enumerate(produtos):
-            col1, col2, col3, col4 = st.columns([3,1,1,1])
-            col1.write(p["nome"])
-            col2.write(p["quantidade"])
-            if col3.button("Editar", key=f"edit_prod_{idx}"):
-                st.session_state["prod_nome"] = p["nome"]
-                st.session_state["prod_qtd"] = p["quantidade"]
-                st.session_state["editar_produto_idx"] = idx
-            if col4.button("Excluir", key=f"del_prod_{idx}"):
-                produtos.pop(idx)
+    if not produtos:
+
+        st.warning("Nenhum produto cadastrado")
+        return
+
+    df = pd.DataFrame(produtos)
+
+    total_produtos = len(df)
+    total_estoque = df["quantidade"].sum()
+    media = df["quantidade"].mean()
+
+    estoque_baixo = df[df["quantidade"] <= 5]
+
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric("Produtos cadastrados", total_produtos)
+    col2.metric("Itens em estoque", int(total_estoque))
+    col3.metric("Média por produto", round(media,2))
+
+    if not estoque_baixo.empty:
+
+        st.error("⚠ Produtos com estoque baixo")
+        st.dataframe(estoque_baixo)
+
+    st.divider()
+
+    col1, col2 = st.columns(2)
+
+    fig1 = px.bar(df, x="nome", y="quantidade", title="Estoque por Produto")
+    col1.plotly_chart(fig1, use_container_width=True)
+
+    fig2 = px.pie(df, names="nome", values="quantidade", title="Distribuição do Estoque")
+    col2.plotly_chart(fig2, use_container_width=True)
+
+    st.divider()
+
+    st.subheader("Tabela de Produtos")
+    st.dataframe(df, use_container_width=True)
+
+
+# ---------------- PRODUTOS ----------------
+
+def produtos_page():
+
+    st.title("📦 Produtos")
+
+    produtos = load_json(PRODUTOS_FILE)
+    categorias = load_json(CATEGORIAS_FILE)
+
+    categorias_lista = [c["nome"] for c in categorias]
+
+    busca = st.text_input("🔎 Buscar produto")
+
+    with st.expander("Adicionar Produto"):
+
+        nome = st.text_input("Nome do Produto")
+        qtd = st.number_input("Quantidade", min_value=0)
+        categoria = st.selectbox("Categoria", categorias_lista if categorias_lista else ["Sem categoria"])
+
+        if st.button("Salvar Produto"):
+
+            produtos.append({
+                "nome": nome,
+                "quantidade": qtd,
+                "categoria": categoria
+            })
+
+            save_json(PRODUTOS_FILE, produtos)
+
+            st.success("Produto salvo!")
+            st.rerun()
+
+    st.divider()
+
+    for idx, p in enumerate(produtos):
+
+        if busca and busca.lower() not in p["nome"].lower():
+            continue
+
+        col1, col2, col3, col4, col5 = st.columns([4,2,1,1,1])
+
+        col1.write(p["nome"])
+        col2.write(p["quantidade"])
+
+        if col3.button("➕", key=f"add_{idx}"):
+
+            produtos[idx]["quantidade"] += 1
+            save_json(PRODUTOS_FILE, produtos)
+            st.rerun()
+
+        if col4.button("➖", key=f"remove_{idx}"):
+
+            if produtos[idx]["quantidade"] > 0:
+
+                produtos[idx]["quantidade"] -= 1
                 save_json(PRODUTOS_FILE, produtos)
-                st.success("Produto excluído!")
+
+            else:
+                st.warning("Estoque zerado")
+
+            st.rerun()
+
+        if col5.button("Excluir", key=f"del_{idx}"):
+
+            produtos.pop(idx)
+            save_json(PRODUTOS_FILE, produtos)
+            st.rerun()
+
+
+# ---------------- CATEGORIAS ----------------
 
 def categorias_page():
-    st.header("Categorias")
+
+    st.title("📂 Categorias")
+
     categorias = load_json(CATEGORIAS_FILE)
-    
-    with st.expander("Adicionar / Editar Categoria"):
-        nome = st.text_input("Nome da Categoria", key="cat_nome")
-        desc = st.text_input("Descrição", key="cat_desc")
-        editar_idx = st.session_state.get("editar_cat_idx", None)
-        
-        if st.button("Salvar Categoria"):
-            if not nome:
-                st.error("Nome obrigatório")
-            else:
-                if editar_idx is not None:
-                    categorias[editar_idx] = {"nome": nome, "descricao": desc}
-                    st.session_state["editar_cat_idx"] = None
-                else:
-                    categorias.append({"nome": nome, "descricao": desc})
-                save_json(CATEGORIAS_FILE, categorias)
-                st.success("Categoria salva!")
+
+    nome = st.text_input("Nome da categoria")
+    desc = st.text_input("Descrição")
+
+    if st.button("Salvar categoria"):
+
+        categorias.append({
+            "nome": nome,
+            "descricao": desc
+        })
+
+        save_json(CATEGORIAS_FILE, categorias)
+
+        st.success("Categoria salva")
+        st.rerun()
 
     if categorias:
-        for idx, c in enumerate(categorias):
-            col1, col2, col3, col4 = st.columns([3,3,1,1])
-            col1.write(c["nome"])
-            col2.write(c["descricao"])
-            if col3.button("Editar", key=f"edit_cat_{idx}"):
-                st.session_state["cat_nome"] = c["nome"]
-                st.session_state["cat_desc"] = c["descricao"]
-                st.session_state["editar_cat_idx"] = idx
-            if col4.button("Excluir", key=f"del_cat_{idx}"):
-                categorias.pop(idx)
-                save_json(CATEGORIAS_FILE, categorias)
-                st.success("Categoria excluída!")
 
-# ---------------- INICIAL ----------------
-if "logged_in" not in st.session_state:
-    st.session_state["logged_in"] = False
+        df = pd.DataFrame(categorias)
+        st.dataframe(df, use_container_width=True)
+
+
+# ---------------- MENU ----------------
+
+def dashboard():
+
+    st.sidebar.title(f"Olá, {st.session_state.usuario}!")
+
+    menu = st.sidebar.radio(
+        "Menu",
+        ["Dashboard","Produtos","Categorias","Logout"]
+    )
+
+    if menu == "Dashboard":
+        dashboard_home()
+
+    elif menu == "Produtos":
+        produtos_page()
+
+    elif menu == "Categorias":
+        categorias_page()
+
+    elif menu == "Logout":
+
+        st.session_state.logged = False
+        st.rerun()
+
+
+# ---------------- INICIO ----------------
+
+if "logged" not in st.session_state:
+    st.session_state.logged = False
+
 if "page" not in st.session_state:
-    st.session_state["page"] = "login"
+    st.session_state.page = "login"
 
-if not st.session_state["logged_in"]:
-    if st.session_state["page"] == "login":
+if not st.session_state.logged:
+
+    if st.session_state.page == "login":
         login_page()
+
     else:
         register_page()
+
 else:
     dashboard()

@@ -1,0 +1,18 @@
+[
+    {
+        "nome": "Limpeza",
+        "descricao": "Produtos de limpeza"
+    },
+    {
+        "nome": "Alimentp",
+        "descricao": "Cozinha"
+    },
+    {
+        "nome": "Escritorio",
+        "descricao": ""
+    },
+    {
+        "nome": "fardamentos",
+        "descricao": "alunos vestirem"
+    }
+]
