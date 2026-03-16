@@ -1,18 +1,22 @@
 [
     {
-        "nome": "Limpeza",
-        "descricao": "Produtos de limpeza"
-    },
-    {
-        "nome": "Alimentp",
-        "descricao": "Cozinha"
-    },
-    {
-        "nome": "Escritorio",
+        "nome": "ESPORTIVO",
         "descricao": ""
     },
     {
-        "nome": "fardamentos",
-        "descricao": "alunos vestirem"
+        "nome": "ESCRITORIO",
+        "descricao": ""
+    },
+    {
+        "nome": "ALIMENTO",
+        "descricao": ""
+    },
+    {
+        "nome": "LIMPEZA",
+        "descricao": ""
+    },
+    {
+        "nome": "FARDAMENTO",
+        "descricao": ""
     }
 ]

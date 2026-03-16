@@ -1,22 +1,26 @@
 [
     {
-        "nome": "Arroz",
-        "quantidade": 13,
-        "categoria": "Alimentp"
+        "nome": "SABÃO EM PÓ",
+        "quantidade": 230,
+        "estoque_minimo": 100,
+        "categoria": "LIMPEZA"
     },
     {
-        "nome": "Sab\u00e3o em p\u00f3",
-        "quantidade": 12,
-        "categoria": "Limpeza"
+        "nome": "DETERGENTE",
+        "quantidade": 240,
+        "estoque_minimo": 100,
+        "categoria": "LIMPEZA"
     },
     {
-        "nome": "Resma de papel A4",
-        "quantidade": 12,
-        "categoria": "Escritorio"
+        "nome": "ÁGUA SANITÁRIA",
+        "quantidade": 340,
+        "estoque_minimo": 200,
+        "categoria": "LIMPEZA"
     },
     {
-        "nome": "Feij\u00e3o",
-        "quantidade": 2,
-        "categoria": "Alimentp"
+        "nome": "BOLA FUTSAL",
+        "quantidade": 7,
+        "estoque_minimo": 2,
+        "categoria": "ESPORTIVO"
     }
 ]
